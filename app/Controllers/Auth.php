@@ -155,4 +155,37 @@ public function updatePasswordFromToken()
 
     return redirect()->to('/login')->with('success', 'Password berhasil diubah.');
 }
+public function kirimUndangan()
+{
+    $email = $this->request->getPost('email');
+
+    $emailService = \Config\Services::email();
+    $registerLink = base_url('/register');
+
+    $emailService->setTo($email);
+    $emailService->setFrom('adhityabagus509@gmail.com', 'TaskTim App');
+    $emailService->setSubject('Undangan Mendaftar di TaskTim');
+    $emailService->setMailType('html'); // ⬅️ Ini WAJIB agar HTML tampil
+
+    $emailContent = '
+        <p>Halo,</p>
+        <p>Kamu diundang untuk bergabung ke aplikasi <strong>TaskTim</strong>.</p>
+        <p>Silakan klik tombol di bawah ini untuk mendaftar:</p>
+        <p>
+            <a href="' . $registerLink . '" style="background-color:#28a745;padding:10px 20px;color:white;text-decoration:none;border-radius:5px;">
+                Daftar Sekarang
+            </a>
+        </p>
+        <p>Jika kamu merasa tidak berkaitan, abaikan email ini.</p>
+    ';
+
+    $emailService->setMessage($emailContent);
+
+    if ($emailService->send()) {
+        return redirect()->back()->with('success', 'Undangan berhasil dikirim ke email.');
+    } else {
+        return redirect()->back()->with('error', nl2br($emailService->printDebugger(['headers', 'subject', 'body'])));
+    }
+}
+
 }
