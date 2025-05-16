@@ -46,11 +46,22 @@ $routes->get('project/(:num)', 'ProjectController::detail/$1'); // Tampilkan det
 $routes->get('project/(:num)/task/create', 'ProjectController::createTask/$1'); // Form tambah task
 $routes->post('project/(:num)/task/store', 'ProjectController::storeTask/$1'); // Simpan task baru
 $routes->get('project/(:num)', 'ProjectController::showProjectDetail/$1'); // Tampilkan detail proyek
+$routes->get('projects/(:num)', 'ProjectController::showProjectDetail/$1');
 
 // ==========================
 // TASK ROUTES
 // ==========================
 $routes->get('task/(:num)', 'ProjectController::showTask/$1'); // Tampilkan detail task
+// Edit Task (tampilkan form edit)
+$routes->get('task/edit/(:num)', 'ProjectController::editTask/$1');
+
+// Update Task (proses update)
+$routes->post('task/update/(:num)', 'ProjectController::updateTask/$1');
+
+// Delete Task
+$routes->delete('task/(:num)', 'ProjectController::deleteTask/$1');
+$routes->delete('task/delete/(:num)', 'ProjectController::deleteTask/$1');
+
 
 // ==========================
 // PROJECT ACTION ROUTES
@@ -62,3 +73,7 @@ $routes->post('projects/delete', 'ProjectController::delete'); // Hapus proyek
 
 $routes->get('projects/(:num)/members', 'ProjectController::showProjectMembers/$1');
 
+$routes->post('project/update', 'ProjectController::update');
+$routes->get('task/(:num)/edit', 'ProjectController::editTask/$1');
+$routes->get('task/(:num)/edit', 'ProjectController::editTask/$1');
+$routes->post('task/(:num)/update', 'ProjectController::updateTask/$1');
