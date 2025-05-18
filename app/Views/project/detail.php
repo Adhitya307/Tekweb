@@ -15,6 +15,13 @@
     <link rel="stylesheet" href="<?= base_url('css/detail.css') ?>" />
 
     <style>
+        body {
+            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            color: #1f2937; /* text-gray-900 */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
         .btn-indigo {
             background-color: #4f46e5;
             color: white;
@@ -26,9 +33,85 @@
         .btn-indigo:hover {
             background-color: #4338ca;
         }
+
+        /* Navbar custom styles */
+        .navbar {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 1rem;
+            background: white;
+            box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #4f46e5; /* Indigo 600 */
+            letter-spacing: 1px;
+        }
+
+        .nav-link {
+            font-weight: 600;
+            color: #374151; /* Gray-700 */
+            transition: color 0.3s ease;
+            text-decoration: none;
+        }
+        .nav-link:hover, .nav-link:focus {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+
+        .btn-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            border-radius: 50px;
+            padding: 0.375rem 1rem;
+            font-size: 0.9rem;
+            color: #4f46e5;
+            border: 2px solid #4f46e5;
+            transition: background-color 0.3s, color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-profile:hover, .btn-profile:focus {
+            background-color: #4f46e5;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .btn-profile svg {
+            width: 20px;
+            height: 20px;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-b from-gray-100 to-gray-200 text-gray-900 font-sans min-h-screen">
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <a class="navbar-brand" href="#">TaskTim</a>
+        <ul class="flex gap-6 list-none m-0 p-0">
+            <li><a class="nav-link" href="/dashboard">Dashboard</a></li>
+        </ul>
+        <div>
+            <?php if (isset($user) && !empty($user['nama'])): ?>
+                <a href="/profile" class="btn-profile" aria-label="Profile <?= esc($user['nama']) ?>">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3z"/>
+                        <path fill-rule="evenodd" d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                    </svg>
+                    <?= esc($user['nama']) ?>
+                </a>
+            <?php else: ?>
+                <a href="/login" class="btn-indigo">Login</a>
+            <?php endif; ?>
+        </div>
+    </nav>
 
     <main class="px-8 py-12 max-w-7xl mx-auto">
         <h1 class="text-4xl font-extrabold text-indigo-700 mb-10 text-center drop-shadow-lg">
@@ -39,24 +122,61 @@
             <!-- Loop tiap kategori -->
             <?php
                 $statuses = [
-                    'todo' => ['label' => 'To Do', 'color' => 'indigo'],
-                    'doing' => ['label' => 'Doing', 'color' => 'yellow'],
-                    'done' => ['label' => 'Done', 'color' => 'green'],
+                    'todo' => ['label' => 'To Do', 'color' => 'indigo-500'],
+                    'doing' => ['label' => 'Doing', 'color' => 'yellow-400'],
+                    'done' => ['label' => 'Done', 'color' => 'green-500'],
                 ];
                 foreach ($statuses as $status => $info):
+                    // Atur border color manual karena gak bisa PHP parsing tailwind classes dinamis
+                    $borderColorClass = match ($status) {
+                        'todo' => 'border-indigo-500',
+                        'doing' => 'border-yellow-400',
+                        'done' => 'border-green-500',
+                        default => 'border-gray-300'
+                    };
+                    $textColorClass = match ($status) {
+                        'todo' => 'text-indigo-600',
+                        'doing' => 'text-yellow-600',
+                        'done' => 'text-green-600',
+                        default => 'text-gray-700'
+                    };
+                    $bgHoverClass = match ($status) {
+                        'todo' => 'hover:bg-indigo-50',
+                        'doing' => 'hover:bg-yellow-50',
+                        'done' => 'hover:bg-green-50',
+                        default => ''
+                    };
+                    $borderLeftClass = match ($status) {
+                        'todo' => 'border-l-indigo-400',
+                        'doing' => 'border-l-yellow-400',
+                        'done' => 'border-l-green-400',
+                        default => 'border-l-gray-300'
+                    };
+                    $textLinkClass = match ($status) {
+                        'todo' => 'text-indigo-800',
+                        'doing' => 'text-yellow-800',
+                        'done' => 'text-green-800',
+                        default => 'text-gray-800'
+                    };
+                    $btnEditTextColor = match ($status) {
+                        'todo' => 'text-indigo-600 hover:text-indigo-900',
+                        'doing' => 'text-yellow-600 hover:text-yellow-900',
+                        'done' => 'text-green-600 hover:text-green-900',
+                        default => 'text-gray-600 hover:text-gray-900'
+                    };
             ?>
-            <section class="p-6 bg-white shadow-xl rounded-xl border-t-4 border-<?= $info['color'] ?>-500">
-                <h3 class="text-xl font-bold text-<?= $info['color'] ?>-600 mb-4"><?= $info['label'] ?></h3>
+            <section class="p-6 bg-white shadow-xl rounded-xl border-t-4 <?= $borderColorClass ?>">
+                <h3 class="text-xl font-bold <?= $textColorClass ?> mb-4"><?= $info['label'] ?></h3>
                 <ul class="space-y-4">
                     <?php foreach ($tasks[$status] as $task): ?>
-                    <li class="relative group bg-gray-100 rounded-lg border-l-4 border-<?= $info['color'] ?>-400 hover:bg-<?= $info['color'] ?>-50 transition">
-                        <a href="<?= base_url('task/' . $task['id']) ?>" class="block p-4 font-semibold text-<?= $info['color'] ?>-800">
+                    <li class="relative group bg-gray-100 rounded-lg <?= $borderLeftClass ?> border-l-4 <?= $bgHoverClass ?> transition">
+                        <a href="<?= base_url('task/' . $task['id']) ?>" class="block p-4 font-semibold <?= $textLinkClass ?>">
                             <?= esc($task['title']) ?>
                         </a>
                         <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2 bg-white rounded shadow p-1">
                             <button 
                                 data-id="<?= esc($task['id']) ?>" 
-                                class="btn-edit text-<?= $info['color'] ?>-600 hover:text-<?= $info['color'] ?>-900" 
+                                class="btn-edit <?= $btnEditTextColor ?>" 
                                 title="Edit"
                                 type="button"
                             >
@@ -68,8 +188,8 @@
                             <form action="<?= base_url('task/' . $task['id']) ?>" method="POST" class="inline delete-form" onsubmit="return confirmDelete(event)">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="_method" value="DELETE" />
-                                <button type="submit" class="text-red-600 hover:text-red-900 focus:outline-none">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <button type="submit" class="text-red-600 hover:text-red-900 focus:outline-none" aria-label="Hapus task">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" >
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
                                 </button>
@@ -82,20 +202,19 @@
             <?php endforeach; ?>
         </div>
 
-<!-- Tombol Tambah dan Kembali -->
-<div class="mt-12 flex justify-between">
-    <a href="/dashboard" class="btn-indigo bg-gray-500 hover:bg-gray-600 self-center">
-        ← Kembali
-    </a>
-    <button class="btn-indigo" onclick="openModalTambah()">Tambah Sub-Tugas</button>
-</div>
-
+        <!-- Tombol Tambah dan Kembali -->
+        <div class="mt-12 flex justify-between">
+            <a href="/dashboard" class="btn-indigo bg-gray-500 hover:bg-gray-600 self-center">
+                ← Kembali
+            </a>
+            <button class="btn-indigo" onclick="openModalTambah()">Tambah Sub-Tugas</button>
+        </div>
     </main>
 
     <!-- Modal Tambah Sub-Tugas -->
-    <div id="modalTambah" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden" role="dialog" aria-modal="true">
+    <div id="modalTambah" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden" role="dialog" aria-modal="true" aria-labelledby="modalTambahTitle" aria-describedby="modalTambahDesc">
         <div class="bg-white w-full max-w-md p-6 rounded-lg shadow-lg">
-            <h2 class="text-2xl font-semibold text-indigo-600 mb-4 text-center">Tambah Sub-Tugas</h2>
+            <h2 id="modalTambahTitle" class="text-2xl font-semibold text-indigo-600 mb-4 text-center">Tambah Sub-Tugas</h2>
 
             <form action="<?= base_url('project/' . $project['id'] . '/task/store') ?>" method="POST" class="space-y-6" novalidate>
                 <?= csrf_field() ?>

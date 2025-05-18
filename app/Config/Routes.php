@@ -77,3 +77,6 @@ $routes->post('project/update', 'ProjectController::update');
 $routes->get('task/(:num)/edit', 'ProjectController::editTask/$1');
 $routes->get('task/(:num)/edit', 'ProjectController::editTask/$1');
 $routes->post('task/(:num)/update', 'ProjectController::updateTask/$1');
+
+
+$routes->post('comments/store', 'CommentController::store');

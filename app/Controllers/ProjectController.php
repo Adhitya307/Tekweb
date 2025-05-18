@@ -51,10 +51,12 @@ class ProjectController extends BaseController
             }
         }
 
-        return view('project/detail', [
-            'project' => $project,
-            'tasks'   => $tasks,
-        ]);
+    $user = session()->get('user'); // ambil data user dari session (pastikan sudah login
+    return view('project/detail', [
+        'user' => $user,
+        'project' => $project,
+        'tasks' => $tasks,
+    ]);
     }
 
     /**
@@ -239,21 +241,45 @@ if (!$user) {
     /**
      * Tampilkan detail task
      */
-    public function showTask(int $taskId): string
-    {
-        $task = $this->taskModel->find($taskId);
-
-        if (!$task) {
-            throw PageNotFoundException::forPageNotFound("Tugas tidak ditemukan.");
-        }
-
-        $project = $this->projectModel->find($task['project_id']);
-
-        return view('project/show', [
-            'task'    => $task,
-            'project' => $project,
-        ]);
+public function showTask(int $taskId): string
+{
+    $task = $this->taskModel->find($taskId);
+    if (!$task) {
+        throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Tugas tidak ditemukan.");
     }
+
+    $project = $this->projectModel->find($task['project_id']);
+
+    $commentModel = new \App\Models\CommentModel();
+    $userModel = new \App\Models\UserModel();
+
+    // Ambil semua komentar terkait task
+    $comments = $commentModel->where('task_id', $taskId)->orderBy('created_at', 'ASC')->findAll();
+
+    // Ambil user_id dari komentar, tapi cek dulu kalau $comments kosong
+    $userIds = !empty($comments) ? array_column($comments, 'user_id') : [];
+
+    // Ambil data user jika ada user_id
+    $users = !empty($userIds) ? $userModel->whereIn('id', $userIds)->findAll() : [];
+
+    // Buat mapping user_id ke nama user
+    $userMap = [];
+    foreach ($users as $u) {
+        $userMap[$u['id']] = $u['nama'];
+    }
+
+    // Tambahkan nama user ke setiap komentar, jika user tidak ditemukan beri 'Unknown'
+    foreach ($comments as &$comment) {
+        $comment['nama'] = $userMap[$comment['user_id']] ?? 'Unknown';
+    }
+    unset($comment); // Melepaskan reference
+
+    return view('project/show', [
+        'task'     => $task,
+        'project'  => $project,
+        'comments' => $comments,
+    ]);
+}
 
     /**
      * Tampilkan anggota project dengan nama user
