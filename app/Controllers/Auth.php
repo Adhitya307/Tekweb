@@ -20,24 +20,33 @@ class Auth extends BaseController {
             'password' => password_hash($this->request->getPost('password'), PASSWORD_DEFAULT)
         ];
         $model->save($data);
-        return redirect()->to('/login');
+        // Flash message untuk sukses
+        return redirect()->to('/register')->with('success', 'Akun berhasil dibuat! Silakan login.');
     }
 
     public function login() {
         return view('Auth/login');
     }
 
-    public function process_login() {
-        $model = new UserModel();
-        $user = $model->where('email', $this->request->getPost('email'))->first();
+public function process_login() {
+    $model = new UserModel();
+    $user = $model->where('email', $this->request->getPost('email'))->first();
 
-        if ($user && password_verify($this->request->getPost('password'), $user['password'])) {
-            session()->set('user', $user);
-            return redirect()->to('/dashboard');
-        }
+    if ($user && password_verify($this->request->getPost('password'), $user['password'])) {
+        session()->set([
+            'user' => $user,
+            'user_id' => $user['id']
+        ]);
+        
+        // Hapus atau komentar dd() setelah yakin session sudah benar
+        // dd(session()->get());
 
-        return redirect()->back()->with('error', 'Login gagal');
+        return redirect()->to('/dash');
     }
+
+    return redirect()->back()->with('error', 'Login gagal');
+}
+
 
     public function logout() {
         session()->destroy();
@@ -81,37 +90,54 @@ public function forgotPasswordForm()
 
 public function sendResetToken()
 {
-    $email = $this->request->getPost('email');
+    $email = $this->request->getPost('email', FILTER_SANITIZE_EMAIL);
     $model = new UserModel();
     $user = $model->where('email', $email)->first();
 
+    // Cek apakah user dengan email tersebut ada
     if (!$user) {
         return redirect()->back()->with('error', 'Email tidak ditemukan');
     }
 
-    // Generate token & expiry
-    $token = bin2hex(random_bytes(32));
-    $expire = date('Y-m-d H:i:s', time() + 3600); // 1 jam
+    // Generate token dan waktu kedaluwarsa (1 jam)
+    $token  = bin2hex(random_bytes(32));
+    $expire = date('Y-m-d H:i:s', time() + 3600);
 
-    // Simpan token
+    // Simpan token dan waktu expire ke database
     $model->update($user['id'], [
-        'reset_token' => $token,
+        'reset_token'             => $token,
         'reset_token_expired_at' => $expire
     ]);
 
-    // Kirim email
-    $emailService = \Config\Services::email();
+    // Siapkan email
     $resetLink = base_url('/reset-password?token=' . $token);
-    $emailService->setTo($email);
-    $emailService->setSubject('Reset Password Anda - TaskTim');
-    $emailService->setMessage("Klik link berikut untuk mengatur ulang password Anda:<br><a href=\"$resetLink\">$resetLink</a>");
 
+    $emailContent = "
+        <p>Halo <strong>{$user['nama']}</strong>,</p>
+        <p>Kami menerima permintaan untuk mengatur ulang kata sandi Anda.</p>
+        <p>Silakan klik tautan di bawah ini untuk mengatur ulang kata sandi Anda:</p>
+        <p><a href=\"$resetLink\" target=\"_blank\" style=\"color: #3366cc;\">$resetLink</a></p>
+        <p>Link ini berlaku selama <strong>1 jam</strong>.</p>
+        <br>
+        <p>Jika Anda tidak merasa melakukan permintaan ini, abaikan email ini.</p>
+        <p>Salam hangat,<br><strong>Tim TaskTim</strong></p>
+    ";
+
+    $emailService = \Config\Services::email();
+    $emailService->setTo($email);
+    $emailService->setSubject('Permintaan Reset Kata Sandi - TaskTim');
+    $emailService->setMessage($emailContent);
+    $emailService->setMailType('html'); // Penting agar email tampil rapi dalam HTML
+
+    // Kirim email
     if (!$emailService->send()) {
-        return redirect()->back()->with('error', 'Gagal mengirim email. Coba lagi.');
+        return redirect()->back()->with('error', 'Gagal mengirim email. Silakan coba lagi.');
     }
 
-    return redirect()->to('/login')->with('success', 'Email reset sudah dikirim!');
+    // Berhasil: arahkan kembali ke form lupa password dengan pesan sukses
+    return redirect()->to('/forgot-password')->with('success', 'Email reset password telah dikirim ke alamat Anda.');
 }
+
 
 public function resetPasswordForm()
 {

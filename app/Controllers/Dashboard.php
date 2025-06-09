@@ -14,9 +14,8 @@ class Dashboard extends BaseController
         }
 
         $user = session()->get('user');
-
-        // Cek role user untuk setiap project
         $projectMemberModel = new ProjectMemberModel();
+        
         $projects = $projectMemberModel
             ->select('projects.*, project_members.role')
             ->join('projects', 'projects.id = project_members.project_id')
@@ -38,23 +37,20 @@ class Dashboard extends BaseController
         $projectModel = new ProjectModel();
         $projectMemberModel = new ProjectMemberModel();
         $user = session()->get('user');
-        $userId = $user['id'];
-
-        $projectName = $this->request->getPost('name');
 
         $projectId = $projectModel->insert([
-            'name' => $projectName,
-            'owner_id' => $userId
+            'name' => $this->request->getPost('name'),
+            'owner_id' => $user['id']
         ]);
 
         $projectMemberModel->insert([
             'project_id' => $projectId,
-            'user_id' => $userId,
+            'user_id' => $user['id'],
             'role' => 'ketua',
             'invited_at' => date('Y-m-d H:i:s'),
             'status' => 'active'
         ]);
 
-        return redirect()->to('/dashboard')->with('success', 'Project berhasil dibuat!');
+        return redirect()->to('/dash')->with('success', 'Project berhasil dibuat!');
     }
 }

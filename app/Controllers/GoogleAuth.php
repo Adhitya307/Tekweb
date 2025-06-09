@@ -26,34 +26,39 @@ class GoogleAuth extends BaseController
         if ($this->request->getVar('code')) {
             $token = $client->fetchAccessTokenWithAuthCode($this->request->getVar('code'));
 
-            if (!isset($token['error'])) {
-                $client->setAccessToken($token['access_token']);
-                $google_oauth = new \Google_Service_Oauth2($client);
-                $google_user = $google_oauth->userinfo->get();
-
-                $userModel = new UserModel();
-                $existingUser = $userModel->where('email', $google_user->email)->first();
-
-                if (!$existingUser) {
-                    $userModel->save([
-                        'nama' => $google_user->name,
-                        'email' => $google_user->email,
-                        'password' => null // Belum punya password
-                    ]);
-                    $existingUser = $userModel->where('email', $google_user->email)->first();
-                }
-
-                session()->set('user', $existingUser);
-
-                // Jika belum punya password, arahkan ke atur sandi
-                if (empty($existingUser['password'])) {
-                    return redirect()->to('/atur-password');
-                }
-
-                return redirect()->to('/dashboard');
+            if (isset($token['error'])) {
+                // Jika ada error, bisa logging atau redirect dengan pesan error
+                log_message('error', 'Google OAuth token error: ' . $token['error']);
+                return redirect()->to('/login')->with('error', 'Gagal login dengan Google: ' . $token['error']);
             }
+
+            $client->setAccessToken($token['access_token']);
+            $google_oauth = new \Google_Service_Oauth2($client);
+            $google_user = $google_oauth->userinfo->get();
+
+            $userModel = new UserModel();
+            $existingUser = $userModel->where('email', $google_user->email)->first();
+
+            if (!$existingUser) {
+                $userModel->save([
+                    'nama' => $google_user->name,
+                    'email' => $google_user->email,
+                    'password' => null // Belum punya password
+                ]);
+                $existingUser = $userModel->where('email', $google_user->email)->first();
+            }
+
+            // Set session dengan key 'user' untuk filter auth
+            session()->set('user', $existingUser);
+
+            // Jika belum punya password, arahkan ke atur sandi
+            if (empty($existingUser['password'])) {
+                return redirect()->to('/atur-password');
+            }
+
+            return redirect()->to('/dash');
         }
 
-        return redirect()->to('/login');
+        return redirect()->to('/login')->with('error', 'Kode otorisasi tidak ditemukan');
     }
 }

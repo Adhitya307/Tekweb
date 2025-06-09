@@ -206,37 +206,45 @@ if (!$user) {
     /**
      * Simpan task baru
      */
-    public function storeTask(int $projectId): ResponseInterface
-    {
-        $project = $this->projectModel->find($projectId);
+public function storeTask(int $projectId): ResponseInterface
+{
+    $project = $this->projectModel->find($projectId);
 
-        if (!$project) {
-            throw PageNotFoundException::forPageNotFound("Proyek tidak ditemukan.");
-        }
-
-        $validationRules = [
-            'title'  => 'required|min_length[3]',
-            'status' => 'required|in_list[todo,doing,done]',
-        ];
-
-        if (!$this->validate($validationRules)) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('errors', $this->validator->getErrors());
-        }
-
-        $this->taskModel->save([
-            'project_id'  => $projectId,
-            'title'       => $this->request->getPost('title'),
-            'description' => $this->request->getPost('description'),
-            'status'      => $this->request->getPost('status'),
-        ]);
-
-        return redirect()
-            ->to(base_url("project/$projectId"))
-            ->with('success', 'Sub-tugas berhasil dibuat!');
+    if (!$project) {
+        throw PageNotFoundException::forPageNotFound("Proyek tidak ditemukan.");
     }
+
+    $validationRules = [
+        'title'  => 'required|min_length[3]',
+        'status' => 'required|in_list[todo,doing,done]',
+    ];
+
+    if (!$this->validate($validationRules)) {
+        return redirect()
+            ->back()
+            ->withInput()
+            ->with('errors', $this->validator->getErrors());
+    }
+
+    $data = [
+        'project_id'  => $projectId,
+        'title'       => $this->request->getPost('title'),
+        'description' => $this->request->getPost('description'),
+        'status'      => $this->request->getPost('status'),
+    ];
+
+    // Simpan data
+    if (!$this->taskModel->save($data)) {
+        return redirect()
+            ->back()
+            ->withInput()
+            ->with('errors', ['general' => 'Gagal menyimpan sub-tugas. Silakan coba lagi.']);
+    }
+
+    return redirect()
+        ->to(base_url("project/$projectId"))
+        ->with('success', 'Sub-tugas berhasil dibuat!');
+}
 
     /**
      * Tampilkan detail task
@@ -394,4 +402,26 @@ public function editTask(int $taskId)
             ->to(base_url("project/{$task['project_id']}"))
             ->with('success', 'Tugas berhasil dihapus!');
     }
+public function updateStatus(): \CodeIgniter\HTTP\ResponseInterface
+{
+    $input = $this->request->getJSON();
+
+    $taskId = $input->task_id ?? null;
+    $status = $input->status ?? null;
+
+    if (!$taskId || !in_array($status, ['todo', 'doing', 'done'])) {
+        return $this->response->setJSON(['success' => false, 'message' => 'Data tidak valid.']);
+    }
+
+    $task = $this->taskModel->find($taskId);
+    if (!$task) {
+        return $this->response->setJSON(['success' => false, 'message' => 'Tugas tidak ditemukan.']);
+    }
+
+    $this->taskModel->update($taskId, ['status' => $status]);
+
+    return $this->response->setJSON(['success' => true, 'message' => 'Status tugas diperbarui.']);
+}
+
+
 }

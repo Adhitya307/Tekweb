@@ -10,13 +10,17 @@ class Auth implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        if (!session()->get('user')) {
+        $session = session();
+
+        // Cek apakah user sudah login (ada session 'user')
+        if (!$session->has('user')) {
+            // Redirect ke login dengan flashdata error
             return redirect()->to('/login')->with('error', 'Silakan login dulu');
         }
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        // tidak perlu aksi
+        // Tidak perlu aksi setelah request
     }
 }
